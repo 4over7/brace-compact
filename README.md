@@ -1,20 +1,24 @@
 # brace-compact
 
+Save all session context before ending a Claude Code conversation. Seamless recovery next time.
+
 在 Claude Code 会话结束前，自动保存所有工作上下文到文件，确保下次无缝恢复。
 
-> **Part of the compact-resume cycle** — pairs with [`/resume`](https://github.com/4over7/resume) to give Claude Code seamless context recovery.
+> Pairs with [`/resume`](https://github.com/4over7/resume) for seamless context recovery.
 
 ## Problem
 
-Claude Code 的会话上下文会在以下场景丢失：
+Claude Code loses conversation context when you:
 
-- **`/compact`** — 压缩对话历史，释放上下文窗口
-- **退出会话** — 需要重启 Claude Code（如加载新 hook、更新配置）
-- **会话超时** — 长时间不操作，连接断开
-- **切换项目** — 离开当前项目去做其他事
-- **当天结束** — 下班前保存进度，第二天继续
+- Run `/compact` to free up the context window
+- Exit the session (restart Claude Code, load new hooks/settings)
+- Session times out or disconnects
+- Switch to a different project
+- Call it a day and come back tomorrow
 
-这些场景都会导致 AI 丢失重要上下文：调试结论、架构决策、环境状态、待办事项。`brace-compact` 在会话结束前把这些保存到文件，下次用 `/resume` 恢复。
+Important context — debugging conclusions, architecture decisions, environment state — gets lost. `brace-compact` saves it to files before the session ends. Next time, `/resume` brings it all back.
+
+Claude Code 会在以下场景丢失上下文：`/compact` 压缩对话、退出会话、超时断连、切换项目、隔天继续。调试结论、架构决策、环境状态等重要信息都会丢失。`brace-compact` 在会话结束前保存到文件，下次用 `/resume` 恢复。
 
 ## Install
 
@@ -22,17 +26,17 @@ Claude Code 的会话上下文会在以下场景丢失：
 claude install github:4over7/brace-compact
 ```
 
-> Also install the companion skill: `claude install github:4over7/resume`
+> Also install the companion: `claude install github:4over7/resume`
 
 ## Usage
 
-在以下任何时候运行：
+Run before ending your session:
 
 ```
 /brace-compact
 ```
 
-Or with session notes:
+With session notes:
 
 ```
 /brace-compact migrating database to new schema, paused at step 3
@@ -40,7 +44,7 @@ Or with session notes:
 
 ## Workflows
 
-**Compact（压缩对话）：**
+**Compact:**
 ```
 Working...
   → /brace-compact          # save context
@@ -49,7 +53,7 @@ Working...
   → Continue working
 ```
 
-**Exit（退出会话重启）：**
+**Exit & restart:**
 ```
 Working...
   → /brace-compact          # save context
@@ -59,10 +63,10 @@ Working...
   → Continue working
 ```
 
-**End of day（跨天恢复）：**
+**Next day:**
 ```
 Working...
-  → /brace-compact 做到了数据库迁移第3步
+  → /brace-compact paused at database migration step 3
   → exit
   ... next morning ...
   → claude
@@ -70,32 +74,28 @@ Working...
   → Continue from step 3
 ```
 
-## What it saves
+## What it saves | 保存内容
 
 | File | Content |
 |------|---------|
 | `.claude/resume.md` | Structured checkpoint: task state, critical context, next steps, environment |
-| `MEMORY.md` | Updated project memory with decisions, debugging conclusions, pending work |
+| `MEMORY.md` | Updated project memory: decisions, debugging conclusions, pending work |
 | Feedback memories | User corrections saved for future sessions |
 
 ## Companion: [resume](https://github.com/4over7/resume)
 
-`brace-compact` saves context. [`resume`](https://github.com/4over7/resume) restores it.
-
-Install both to complete the cycle:
+`brace-compact` saves. [`resume`](https://github.com/4over7/resume) restores. Install both:
 
 ```bash
 claude install github:4over7/brace-compact
 claude install github:4over7/resume
 ```
 
-After exiting or compacting, say "resume" or run `/resume` to restore saved context.
-
 ## Design
 
 Follows [Anthropic's skill design guidelines](https://docs.anthropic.com/en/docs/claude-code/skills):
 
-- `disable-model-invocation: true` — only invoked manually (has side effects: writes files)
-- `allowed-tools: Read, Write, Edit, Bash, Glob, Grep` — restricted tool set
-- Portable: uses relative paths (`.claude/resume.md`), works in any project
-- Checkpoint is self-contained: reading ONLY `resume.md` + `MEMORY.md` is enough to continue
+- `disable-model-invocation: true` — only invoked manually
+- `allowed-tools: Read, Write, Edit, Bash, Glob, Grep`
+- Portable: relative paths, works in any project
+- Self-contained: `resume.md` + `MEMORY.md` is enough to continue
