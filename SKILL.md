@@ -1,7 +1,7 @@
 ---
 name: brace-compact
-description: Prepare conversation for /compact by persisting session state to checkpoint files. Use when the user says "brace compact", "prepare for compact", or before running /compact.
-disable-model-invocation: true
+description: Save session state before ending a conversation — whether for /compact, exit, restart, or end of day. Use when the user says "brace compact", "prepare for compact", "save progress", or before any session exit.
+disable-model-invocation: false
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 argument-hint: "[optional session notes]"
 ---
@@ -43,7 +43,22 @@ Rule: if you learned something non-obvious during this session that isn't captur
 
 ### 3. Write resume checkpoint
 
-Create `.claude/resume.md` (overwrite if exists) with this exact structure:
+Write `.claude/resume.md` (overwrite if it exists).
+
+**Important — avoid the Write-tool guard**: if `.claude/resume.md` already
+exists (it usually does, left over from the previous session's compact), the
+Write tool will refuse to overwrite it until this session has first `Read` it.
+So before calling Write:
+
+1. Check existence via Bash `ls .claude/resume.md 2>/dev/null` or Glob.
+2. If it exists, call `Read` on it once (even just the first few lines).
+3. Then call `Write` with the new content.
+
+If the file doesn't exist (e.g. first-ever compact in this repo), skip the
+Read step — Write will create it. The `.claude/` directory is guaranteed to
+exist per the system prompt; no `mkdir` needed.
+
+Use this exact structure for the content:
 
 ```markdown
 # Resume Checkpoint
