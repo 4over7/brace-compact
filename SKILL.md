@@ -41,7 +41,31 @@ Find the project's memory index (`MEMORY.md` in the memory directory). Review th
 
 Rule: if you learned something non-obvious during this session that isn't captured in code or git history, it MUST go into memory.
 
-### 3. Write resume checkpoint
+### 3. Persist pending tasks to memory
+
+**Task lists do NOT survive session restart.** `TaskList` items (created via
+`TaskCreate` / `TaskUpdate` during this session) live only in session state —
+after `/compact` or session exit, the list is empty on the next run.
+
+Call `TaskList` to see all pending / in_progress tasks. For each one that
+holds non-trivial context (concrete follow-up work, design decisions, triggering
+conditions), write its essential info into the relevant memory file:
+
+- Normal pending items → the matching `project_*.md` file (e.g. tasks about
+  feature X go into the project memory that covers feature X).
+- If no matching project file exists, create one or append to the closest.
+- Completed tasks can be skipped — their work is already in git history.
+
+Format each persisted task with:
+- **Title** (verbatim from task)
+- **Scenario** (when/why this work is needed)
+- **Implementation sketch** (concrete approach, not just hand-wave)
+- **Trigger condition** (when should this un-park, e.g. "when user reports X")
+
+This way, if the user asks "what was that feature we deferred?" after resume,
+the answer is in memory — not trapped in the disappeared task list.
+
+### 4. Write resume checkpoint
 
 Write `.claude/resume.md` (overwrite if it exists).
 
@@ -93,24 +117,27 @@ Use this exact structure for the content:
 
 If `$ARGUMENTS` is provided, add a `## Session notes` section with the content.
 
-### 4. Check plans
+### 5. Check plans
 
 If an active plan file exists in `.claude/plans/`, verify it reflects current progress. Mark completed steps.
 
-### 5. Save feedback
+### 6. Save feedback
 
 If the user gave corrections during this session ("don't do X", "always do Y"), save each as a feedback memory file.
 
-### 6. Verify
+### 7. Verify
 
 Read back `.claude/resume.md` and confirm it contains enough context for a cold start. Ask yourself: "If I read ONLY this file and MEMORY.md, could I continue the user's work without asking them to re-explain?" If not, add what's missing.
 
-### 7. Output summary
+Also verify pending tasks from step 3 are actually persisted — re-reading the relevant project memory file should let a cold AI understand what was deferred and why.
+
+### 8. Output summary
 
 ```
 🔒 Compact preparation complete
 
 📝 Memory: [updated / no changes needed]
+📋 Tasks persisted: [N pending → memory files / none pending]
 📋 Plan: [updated / none active]
 💾 Uncommitted: [none / N files — consider committing]
 ⚙️ Background: [none / list running tasks]
